@@ -1,0 +1,7 @@
+{
+  "name": "hockey",
+  "version": "0.0.0",
+  "dependencies": {
+    "phaser": "~2.4.3"
+  }
+}
