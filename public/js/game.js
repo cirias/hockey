@@ -20,9 +20,9 @@ function Hockey () {
 
   var gameWidth = 400;
   var gameHeight = 600;
-  var boundThickness = 40;
+  var boundThickness = 20;
   var puckDiameter = 32;
-  var malletDiameter = 100;
+  var malletDiameter = 50;
 
   var game = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, '', null, false, false);
 
@@ -53,10 +53,10 @@ function Hockey () {
     update: function () {
       var upMallet = mallets.children[0];
       var downMallet = mallets.children[1];
-      upMallet.body.setZeroVelocity();
-      downMallet.body.setZeroVelocity();
-      var upPointer = {worldX: upMallet.body.x, worldY: upMallet.body.y};
-      var downPointer = {worldX: downMallet.body.x, worldY: downMallet.body.y};
+      //upMallet.body.setZeroVelocity();
+      //downMallet.body.setZeroVelocity();
+      var upPointer = {x: upMallet.body.x, y: upMallet.body.y};
+      var downPointer = {x: downMallet.body.x, y: downMallet.body.y};
 
       if (game.input.pointer1.active) {
         if (game.input.pointer1.y < game.world.height/2 - malletDiameter/4) {
@@ -74,10 +74,10 @@ function Hockey () {
         }
       }
 
-      upMallet.body.x = upPointer.worldX;
-      upMallet.body.y = upPointer.worldY;
-      downMallet.body.x = downPointer.worldX;
-      downMallet.body.y = downPointer.worldY;
+      upMallet.body.x = upPointer.x;
+      upMallet.body.y = upPointer.y;
+      downMallet.body.x = downPointer.x;
+      downMallet.body.y = downPointer.y;
     },
     render: function () {
       game.debug.text("ping: " + ping + "ms", 10, 20);
@@ -87,20 +87,43 @@ function Hockey () {
       bounds.enableBody = true;
       bounds.physicsBodyType = Phaser.Physics.P2JS;
 
-      bounds.create(game.world.width/2 , boundThickness/2, 'pixel');
-      bounds.create(game.world.width - boundThickness/2, game.world.height/2, 'pixel');
-      bounds.create(game.world.width/2, game.world.height - boundThickness/2, 'pixel');
-      bounds.create(boundThickness/2, game.world.height/2, 'pixel');
-
-      for (var i in bounds.children) {
-        var bound = bounds.children[i];
-        bound.tint = 0xeeeeee;
-        if (i%2 == 0) {
-          bound.scale.setTo(game.world.width, boundThickness);
-          bound.body.setRectangle(game.world.width, boundThickness);
+      for (var i = 0; i < 4; i++) {
+        var box = game.add.graphics();
+        if (i%2 === 0) {
+          box.beginFill(0x6DD8FC);
+          box.drawRect(0, 0, game.world.width, boundThickness);
         } else {
-          bound.scale.setTo(boundThickness, game.world.height);
-          bound.body.setRectangle(boundThickness, game.world.height);
+          box.beginFill(0x91FC6D);
+          box.drawRect(0, 0, boundThickness, game.world.height);
+        }
+        box.endFill();
+
+        var bound;
+        switch (i) {
+          case 0:
+            // Top
+            bound = bounds.create(0, 0);
+            bound.addChild(box);
+            bound.body.setRectangle(game.world.width + puckDiameter * 8, boundThickness + puckDiameter * 4, game.world.width/2, -puckDiameter*2 + boundThickness/2);
+            break;
+          case 1:
+            // Right
+            bound = bounds.create(game.world.width - boundThickness, 0);
+            bound.addChild(box);
+            bound.body.setRectangle(boundThickness + puckDiameter * 4, game.world.height + puckDiameter * 8, puckDiameter*2 + boundThickness/2, game.world.height/2);
+            break;
+          case 2:
+            // Bottom
+            bound = bounds.create(0, game.world.height - boundThickness);
+            bound.addChild(box);
+            bound.body.setRectangle(game.world.width + puckDiameter * 8, boundThickness + puckDiameter * 4, game.world.width/2, puckDiameter * 2 + boundThickness/2);
+            break;
+          case 3:
+            // Left
+            bound = bounds.create(0, 0);
+            bound.addChild(box);
+            bound.body.setRectangle(boundThickness + puckDiameter * 4, game.world.height + puckDiameter * 8, -puckDiameter*2 + boundThickness/2, game.world.height/2);
+            break;
         }
         bound.body.debug = true;
         bound.body.static = true;

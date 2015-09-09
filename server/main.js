@@ -1,7 +1,7 @@
 var app = require('./app.js');
 var http = require('http');
 
-var port = process.env.PORT || '3000';
+var port = process.env.PORT || '4000';
 app.set('port', port);
 
 var server = http.createServer(app);
