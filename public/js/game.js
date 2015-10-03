@@ -18,13 +18,14 @@ function Hockey () {
   }
   measurePing();
 
-  var gameWidth = 400;
-  var gameHeight = 600;
+  var gameWidth = 480;
+  var gameHeight = 720;
   var boundThickness = 20;
-  var puckDiameter = 32;
+  var puckDiameter = 45;
   var puckRadius = puckDiameter / 2;
-  var malletDiameter = 50;
+  var malletDiameter = 90;
   var malletRadius = malletDiameter / 2;
+  var gateWidth = 180;
 
   var game = new Phaser.Game(gameWidth, gameHeight, Phaser.AUTO, '', null, false, false);
 
@@ -32,6 +33,7 @@ function Hockey () {
   var mallets;
   var pucks;
   var puck;
+  var scores;
 
   var GameState = {
     preload: function () {
@@ -51,14 +53,49 @@ function Hockey () {
       this.createMallets();
       this.createPuck();
       this.createCollision();
+      this.createScore();
     },
     update: function () {
+      this.updateMallet();
+      this.checkPuck();
+    },
+    render: function () {
+      game.debug.text("ping: " + ping + "ms", 10, 20);
+    },
+    updateMallet: function () {
       var upMallet = mallets.children[0];
       var downMallet = mallets.children[1];
-      var upPointer = {x: upMallet.body.x, y: upMallet.body.y};
-      var downPointer = {x: downMallet.body.x, y: downMallet.body.y};
 
-      function validPointer (p) {
+      if (!this.upPointer || !this.upPointer.isDown) {
+        if (game.input.pointer1.isDown && atUpside(game.input.pointer1) && (this.downPointer != game.input.pointer1)) {
+          this.upPointer = game.input.pointer1;
+        } else if (game.input.pointer2.isDown && atUpside(game.input.pointer2) && (this.downPointer != game.input.pointer2)) {
+          this.upPointer = game.input.pointer2;
+        } else {
+          this.upPointer = {x: upMallet.body.x, y: upMallet.body.y};
+        }
+      }
+
+      if (!this.downPointer || !this.downPointer.isDown) {
+        if (game.input.pointer1.isDown && atDownside(game.input.pointer1) && (this.upPointer != game.input.pointer1)) {
+          this.downPointer = game.input.pointer1;
+        } else if (game.input.pointer2.isDown && atDownside(game.input.pointer2) && (this.upPointer != game.input.pointer2)) {
+          this.downPointer = game.input.pointer2;
+        } else {
+          this.downPointer = {x: downMallet.body.x, y: downMallet.body.y};
+        }
+      }
+
+      var rate = 30;
+      var upPointer = validify(this.upPointer, 'up');
+      var downPointer = validify(this.downPointer, 'down');
+      upMallet.body.velocity.x = (upPointer.x - upMallet.body.x) * rate;
+      upMallet.body.velocity.y = (upPointer.y - upMallet.body.y) * rate;
+      downMallet.body.velocity.x = (downPointer.x - downMallet.body.x) * rate;
+      downMallet.body.velocity.y = (downPointer.y - downMallet.body.y) * rate;
+
+
+      function validify (p, area) {
         var leftBorder = boundThickness + malletRadius;
         var rightBorder = game.world.width - (boundThickness + malletRadius);
         var topBorder = boundThickness + malletRadius;
@@ -81,6 +118,11 @@ function Hockey () {
           tp.y = p.y;
         }
 
+        if ((area === 'up' && p.y > game.world.height/2) ||
+            (area === 'down' && p.y < game.world.height/2)) {
+          tp.y = game.world.height/2;
+        }
+
         return tp;
       }
 
@@ -95,71 +137,95 @@ function Hockey () {
           p.y > game.world.height/2
         );
       }
-
-      if (game.input.pointer1.active) {
-        var tp1 = validPointer(game.input.pointer1);
-        if (atUpside(tp1)) {
-          upPointer = tp1;
-        } else if (atDownside(tp1)) {
-          downPointer = tp1;
-        }
-      }
-
-      if (game.input.pointer2.active) {
-        var tp2 = validPointer(game.input.pointer2);
-        if (atUpside(tp2)) {
-          upPointer = tp2;
-        } else if (atDownside(tp2)) {
-          downPointer = tp2;
-        }
-      }
-
-      upMallet.body.x = upPointer.x;
-      upMallet.body.y = upPointer.y;
-      downMallet.body.x = downPointer.x;
-      downMallet.body.y = downPointer.y;
     },
-    render: function () {
-      game.debug.text("ping: " + ping + "ms", 10, 20);
+    checkPuck: function () {
+      function initializePuck () {
+        puck.body.x = game.world.centerX;
+        puck.body.y = game.world.centerY;
+        puck.body.setZeroVelocity();
+        puck.body.setZeroForce();
+        puck.body.setZeroRotation();
+        puck.body.setZeroDamping();
+      }
+
+      if (puck.body.y < 0) {
+        var score = parseInt(scores[1].text);
+        score++;
+        scores[1].text = score.toString();
+        initializePuck();
+      } else if (puck.body.y > game.world.height) {
+        var score = parseInt(scores[0].text);
+        score++;
+        scores[0].text = score.toString();
+        initializePuck();
+      }
     },
     createBounds: function () {
       bounds = game.add.group();
       bounds.enableBody = true;
       bounds.physicsBodyType = Phaser.Physics.P2JS;
 
-      for (var i = 0; i < 4; i++) {
-        var box = game.add.graphics();
-        if (i%2 === 0) {
-          box.beginFill(0x6DD8FC);
-          box.drawRect(0, 0, game.world.width, boundThickness);
-        } else {
-          box.beginFill(0x91FC6D);
-          box.drawRect(0, 0, boundThickness, game.world.height);
-        }
-        box.endFill();
+      for (var i = 0; i < 6; i++) {
+        var gateSideWidth = (game.world.width - gateWidth)/2;
 
         var bound;
         switch (i) {
           case 0:
-            // Top
+            // top left
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, gateSideWidth, boundThickness);
+            box.endFill();
             bound = bounds.create(0, 0);
             bound.addChild(box);
-            bound.body.setRectangle(game.world.width + puckDiameter * 8, boundThickness + puckDiameter * 4, game.world.width/2, -puckDiameter*2 + boundThickness/2);
+            bound.body.setRectangle(gateSideWidth + puckDiameter*4, boundThickness + puckDiameter*4, gateSideWidth/2 - puckDiameter*2, boundThickness/2 - puckDiameter*2);
             break;
           case 1:
+            // top right
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, gateSideWidth, boundThickness);
+            box.endFill();
+            bound = bounds.create(gateSideWidth + gateWidth, 0);
+            bound.addChild(box);
+            bound.body.setRectangle(gateSideWidth + puckDiameter*4, boundThickness + puckDiameter*4, gateSideWidth/2 + puckDiameter*2, boundThickness/2 - puckDiameter*2);
+            break;
+          case 2:
             // Right
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, boundThickness, game.world.height);
+            box.endFill();
             bound = bounds.create(game.world.width - boundThickness, 0);
             bound.addChild(box);
             bound.body.setRectangle(boundThickness + puckDiameter * 4, game.world.height + puckDiameter * 8, puckDiameter*2 + boundThickness/2, game.world.height/2);
             break;
-          case 2:
-            // Bottom
+          case 3:
+            // bottom right
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, gateSideWidth, boundThickness);
+            box.endFill();
+            bound = bounds.create(gateSideWidth + gateWidth, game.world.height - boundThickness);
+            bound.addChild(box);
+            bound.body.setRectangle(gateSideWidth + puckDiameter*4, boundThickness + puckDiameter*4, gateSideWidth/2 + puckDiameter*2, boundThickness/2 + puckDiameter*2);
+            break;
+          case 4:
+            // bottom left
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, gateSideWidth, boundThickness);
+            box.endFill();
             bound = bounds.create(0, game.world.height - boundThickness);
             bound.addChild(box);
-            bound.body.setRectangle(game.world.width + puckDiameter * 8, boundThickness + puckDiameter * 4, game.world.width/2, puckDiameter * 2 + boundThickness/2);
+            bound.body.setRectangle(gateSideWidth + puckDiameter*4, boundThickness + puckDiameter*4, gateSideWidth/2 - puckDiameter*2, boundThickness/2 + puckDiameter*2);
             break;
-          case 3:
+          case 5:
             // Left
+            var box = game.add.graphics();
+            box.beginFill(0x6DD8FC);
+            box.drawRect(0, 0, boundThickness, game.world.height);
+            box.endFill();
             bound = bounds.create(0, 0);
             bound.addChild(box);
             bound.body.setRectangle(boundThickness + puckDiameter * 4, game.world.height + puckDiameter * 8, -puckDiameter*2 + boundThickness/2, game.world.height/2);
@@ -186,7 +252,7 @@ function Hockey () {
         mallet.body.setCircle(malletRadius);
         mallet.body.debug = true;
         //mallet.body.kinematic = true;
-        mallet.body.static = true;
+        //mallet.body.static = true;
         mallet.body.damping = 0;
 
         //var sign = game.rnd.integerInRange(0, 1) == 0 ? 1 : -1;
@@ -233,6 +299,14 @@ function Hockey () {
 
       puck.body.setCollisionGroup(puckCollisionGroup);
       puck.body.collides([boundCollisionGroup, playerCollisionGroup]);
+    },
+    createScore: function () {
+      var style = {font: "20px Arial", fill: "#ff0044", align: "center"};
+
+      scores = [
+        game.add.text(game.world.width - boundThickness - 15, game.world.centerY - 15, '0', style),
+        game.add.text(game.world.width - boundThickness - 15, game.world.centerY + 15, '0', style)
+      ];
     }
   };
 
