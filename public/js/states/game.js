@@ -26,7 +26,7 @@ module.exports = function (game) {
     constants: {
       //debug: true,
       debug: false,
-      boundThickness: 20,
+      boundThickness: 14,
       puckDiameter: puckDiameter,
       puckRadius: puckDiameter / 2,
       malletDiameter: malletDiameter,
@@ -35,14 +35,17 @@ module.exports = function (game) {
     },
     preload: function () {
       game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-      game.scale.minWidth = 320;
-      game.scale.minHeight = 480;
-      game.scale.maxWidth = 768*2;
-      game.scale.maxHeight = 1152*2;
 
-      //game.load.image('pixel', 'res/pixel.png');
+      game.load.image('puck', 'res/puck.png');
+      game.load.image('background', 'res/background.png');
+      game.load.image('transverse', 'res/bound-transverse.png');
+      game.load.image('portrait', 'res/bound-portrait.png');
+      game.load.image('puck', 'res/puck.png');
+      game.load.image('up-mallet', 'res/green-circle.png');
+      game.load.image('down-mallet', 'res/red-circle.png');
     },
     create: function () {
+      game.add.tileSprite(0, 0, 480, 800, 'background');
       game.physics.startSystem(Phaser.Physics.P2JS);
       game.physics.p2.restitution = 1;
 
@@ -189,62 +192,48 @@ module.exports = function (game) {
         switch (i) {
           case 0:
             // top left
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, gateSideWidth, this.constants.boundThickness);
-            box.endFill();
-            bound = this.bounds.create(0, 0);
+            var box = game.add.image(-7, -25, 'transverse');
+            bound = this.bounds.create(0, 40 + this.constants.boundThickness/2);
             bound.addChild(box);
             bound.body.setRectangle(gateSideWidth + this.constants.puckDiameter*4, this.constants.boundThickness + this.constants.puckDiameter*4, gateSideWidth/2 - this.constants.puckDiameter*2, this.constants.boundThickness/2 - this.constants.puckDiameter*2);
             break;
           case 1:
             // top right
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, gateSideWidth, this.constants.boundThickness);
-            box.endFill();
-            bound = this.bounds.create(gateSideWidth + this.constants.gateWidth, 0);
+            var box = game.add.image(-25, -25, 'transverse');
+            bound = this.bounds.create(gateSideWidth + this.constants.gateWidth, 40 + this.constants.boundThickness/2);
             bound.addChild(box);
             bound.body.setRectangle(gateSideWidth + this.constants.puckDiameter*4, this.constants.boundThickness + this.constants.puckDiameter*4, gateSideWidth/2 + this.constants.puckDiameter*2, this.constants.boundThickness/2 - this.constants.puckDiameter*2);
             break;
           case 2:
             // Right
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, this.constants.boundThickness, game.world.height);
-            box.endFill();
-            bound = this.bounds.create(game.world.width - this.constants.boundThickness, 0);
-            bound.addChild(box);
+            var box1 = game.add.image(-25, 32, 'portrait');
+            var box2 = game.add.image(-25, 375, 'portrait');
+            bound = this.bounds.create(game.world.width - this.constants.boundThickness - 5, 0);
+            bound.addChild(box1);
+            bound.addChild(box2);
             bound.body.setRectangle(this.constants.boundThickness + this.constants.puckDiameter * 4, game.world.height + this.constants.puckDiameter * 8, this.constants.puckDiameter*2 + this.constants.boundThickness/2, game.world.height/2);
             break;
           case 3:
             // bottom right
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, gateSideWidth, this.constants.boundThickness);
-            box.endFill();
-            bound = this.bounds.create(gateSideWidth + this.constants.gateWidth, game.world.height - this.constants.boundThickness);
+            var box = game.add.image(-25, -25, 'transverse');
+            bound = this.bounds.create(gateSideWidth + this.constants.gateWidth, game.world.height - this.constants.boundThickness - 40 - this.constants.boundThickness/2);
             bound.addChild(box);
             bound.body.setRectangle(gateSideWidth + this.constants.puckDiameter*4, this.constants.boundThickness + this.constants.puckDiameter*4, gateSideWidth/2 + this.constants.puckDiameter*2, this.constants.boundThickness/2 + this.constants.puckDiameter*2);
             break;
           case 4:
             // bottom left
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, gateSideWidth, this.constants.boundThickness);
-            box.endFill();
-            bound = this.bounds.create(0, game.world.height - this.constants.boundThickness);
+            var box = game.add.image(-7, -25, 'transverse');
+            bound = this.bounds.create(0, game.world.height - this.constants.boundThickness - 40 - this.constants.boundThickness/2);
             bound.addChild(box);
             bound.body.setRectangle(gateSideWidth + this.constants.puckDiameter*4, this.constants.boundThickness + this.constants.puckDiameter*4, gateSideWidth/2 - this.constants.puckDiameter*2, this.constants.boundThickness/2 + this.constants.puckDiameter*2);
             break;
           case 5:
             // Left
-            var box = game.add.graphics();
-            box.beginFill(0x6DD8FC);
-            box.drawRect(0, 0, this.constants.boundThickness, game.world.height);
-            box.endFill();
-            bound = this.bounds.create(0, 0);
-            bound.addChild(box);
+            var box1 = game.add.image(-25, 32, 'portrait');
+            var box2 = game.add.image(-25, 375, 'portrait');
+            bound = this.bounds.create(5, 0);
+            bound.addChild(box1);
+            bound.addChild(box2);
             bound.body.setRectangle(this.constants.boundThickness + this.constants.puckDiameter * 4, game.world.height + this.constants.puckDiameter * 8, -this.constants.puckDiameter*2 + this.constants.boundThickness/2, game.world.height/2);
             break;
         }
@@ -259,15 +248,17 @@ module.exports = function (game) {
       this.mallets.physicsBodyType = Phaser.Physics.P2JS;
 
       for (var i = 0; i < 2; i++) {
-        var circle = game.add.graphics();
-        circle.beginFill(0xFF3300);
-        circle.drawCircle(0, 0, this.constants.malletDiameter);
-        circle.endFill();
+        if (i === 0) {
+          var circle = game.add.image(-60, -60, 'up-mallet');
+        } else {
+          var circle = game.add.image(-60, -60, 'down-mallet');
+        }
 
         var mallet = this.mallets.create(0, 0);
         mallet.addChild(circle);
         mallet.body.setCircle(this.constants.malletRadius);
         mallet.body.debug = this.constants.debug;
+        mallet.body.fixedRotation = true;
         //mallet.body.kinematic = true;
         //mallet.body.static = true;
         mallet.body.damping = 0;
@@ -281,10 +272,10 @@ module.exports = function (game) {
       }
 
       this.mallets.children[0].body.x = game.world.centerX;
-      this.mallets.children[0].body.y = this.constants.boundThickness + this.constants.malletRadius;
+      this.mallets.children[0].body.y = this.constants.boundThickness + this.constants.malletRadius + this.constants.gateWidth/2 + 50;
       this.mallets.children[0].pointer = {x: this.mallets.children[0].body.x, y: this.mallets.children[0].body.y};
       this.mallets.children[1].body.x = game.world.centerX;
-      this.mallets.children[1].body.y = game.world.height - this.constants.boundThickness - this.constants.malletRadius;
+      this.mallets.children[1].body.y = game.world.height - this.constants.boundThickness - this.constants.malletRadius - this.constants.gateWidth/2 - 50;
       this.mallets.children[1].pointer = {x: this.mallets.children[1].body.x, y: this.mallets.children[1].body.y};
     },
     createPuck: function () {
@@ -292,13 +283,11 @@ module.exports = function (game) {
       this.pucks.enableBody = true;
       this.pucks.physicsBodyType = Phaser.Physics.P2JS;
       this.puck = this.pucks.create(game.world.centerX, game.world.centerY);
-      var circle = game.add.graphics();
-      circle.beginFill(0xFFFFFF);
-      circle.drawCircle(0, 0, this.constants.puckDiameter);
-      circle.endFill();
+      var circle = game.add.image(-39, -39, 'puck');
       this.puck.addChild(circle);
       this.puck.body.setCircle(this.constants.puckRadius);
       this.puck.body.debug = this.constants.debug;
+      this.puck.body.fixedRotation = true;
       this.puck.body.damping = 0;
     },
     createCollision: function () {
